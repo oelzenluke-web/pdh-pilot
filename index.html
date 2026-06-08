@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDH Pilot — License Renewal Tracker for PEs & Surveyors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d1b2a;--paper:#f4f1ea;--panel:#ffffff;--line:#cdd3da;--grid:#dfe4ea;
+    --accent:#e8590c;--accent-soft:#fbe3d4;--good:#1b7f5e;--good-soft:#d7eee5;
+    --warn:#b54708;--mute:#62707d;--shadow:0 1px 0 rgba(13,27,42,.04),0 8px 24px -12px rgba(13,27,42,.25);
+  }
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:"IBM Plex Sans",sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px;color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  .mono{font-family:"IBM Plex Mono",monospace}
+  header.top{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:24px;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand .mark{font-family:"Archivo",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em}
+  .brand .mark b{color:var(--accent)}
+  .brand .tag{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em}
+  .hdr-right{display:flex;align-items:center;gap:10px}
+  .lic-pill{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--ink);color:var(--paper);padding:6px 12px;border-radius:2px;display:flex;gap:8px;align-items:center;cursor:pointer}
+  .lic-pill span{opacity:.6}
+  .unlock-state{font-family:"IBM Plex Mono",monospace;font-size:12px;display:flex;align-items:center;gap:7px;color:var(--good)}
+  .unlock-state .dot{width:7px;height:7px;border-radius:50%;background:var(--good)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+  .card h2{font-family:"Archivo",sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 4px}
+  .card .sub{color:var(--mute);font-size:13px;margin:0 0 18px}
+  .hero{text-align:center;padding:34px 0 10px}
+  .hero h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:clamp(30px,6vw,46px);line-height:1.02;letter-spacing:-.03em;margin:0 0 10px}
+  .hero h1 em{color:var(--accent);font-style:normal}
+  .hero p{max-width:520px;margin:0 auto;color:var(--mute);font-size:15px}
+  .field{margin-bottom:16px}
+  label{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);margin-bottom:6px}
+  input,select,textarea{width:100%;font-family:"IBM Plex Sans",sans-serif;font-size:15px;padding:11px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .btn{font-family:"Archivo",sans-serif;font-weight:600;font-size:14px;letter-spacing:.02em;border:none;border-radius:4px;padding:12px 20px;cursor:pointer;transition:transform .08s ease,filter .15s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}.btn-ghost:hover{border-color:var(--ink)}
+  .btn-dark{background:var(--ink);color:var(--paper)}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+  .gauges{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:620px){.gauges,.row{grid-template-columns:1fr}}
+  .gauge .glabel{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .gauge .gname{font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+  .gauge .gnum{font-family:"Archivo",sans-serif;font-weight:800;font-size:22px}
+  .gauge .gnum small{font-size:13px;color:var(--mute);font-weight:600}
+  .bar{height:14px;background:var(--grid);border-radius:3px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+  .bar i.done{background:var(--good)}
+  .countdown{display:flex;align-items:baseline;gap:10px}
+  .countdown .big{font-family:"Archivo",sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-.02em}
+  .countdown .big.urgent{color:var(--accent)}
+  .status-line{margin-top:14px;padding:12px 14px;border-radius:4px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+  .status-line.ok{background:var(--good-soft);color:var(--good)}
+  .status-line.gap{background:var(--accent-soft);color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);text-align:left;padding:8px 10px;border-bottom:2px solid var(--line)}
+  td{padding:11px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .cat{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:2px 8px;border-radius:2px;display:inline-block}
+  .cat.technical{background:#e7eef6;color:#1d4e7e}.cat.ethics{background:var(--accent-soft);color:var(--warn)}.cat.other{background:#eceff2;color:var(--mute)}
+  .del{color:var(--mute);cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:12px}.del:hover{color:var(--accent)}
+  .empty{text-align:center;color:var(--mute);padding:30px 0;font-size:14px}
+  .scan-zone{border:2px dashed var(--line);border-radius:6px;padding:22px;text-align:center;background:#fbfaf7;transition:border-color .15s;position:relative}
+  .scan-zone.drag{border-color:var(--accent);background:var(--accent-soft)}
+  .scan-zone .icon{font-size:30px}
+  .scan-note{font-size:12px;color:var(--mute);margin-top:8px}
+  .scanning{display:none;align-items:center;gap:10px;justify-content:center;color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:13px;margin-top:12px}
+  .spin{width:16px;height:16px;border:2px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .lock-badge{position:absolute;top:10px;right:10px;font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;background:var(--ink);color:var(--paper);padding:3px 8px;border-radius:2px;display:flex;gap:5px;align-items:center}
+  .free-meter{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mute);margin-top:10px}
+  .free-meter b{color:var(--accent)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:4px;font-size:14px;opacity:0;transition:.25s;z-index:60;font-family:"IBM Plex Mono",monospace}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .disclaimer{font-size:11px;color:var(--mute);margin-top:6px;line-height:1.4}
+  .edit-link{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);cursor:pointer;text-decoration:underline}
+  .hidden{display:none!important}
+  .foot{text-align:center;color:var(--mute);font-size:11px;font-family:"IBM Plex Mono",monospace;margin-top:30px;letter-spacing:.05em}
+  /* paywall modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(13,27,42,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:70;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);border-radius:8px;max-width:430px;width:100%;box-shadow:0 30px 60px -20px rgba(13,27,42,.5);overflow:hidden;border:1px solid var(--line)}
+  .modal .mhead{background:var(--ink);color:var(--paper);padding:22px 24px}
+  .modal .mhead .price{font-family:"Archivo",sans-serif;font-weight:800;font-size:40px;letter-spacing:-.02em}
+  .modal .mhead .price small{font-size:14px;font-weight:600;opacity:.7;font-family:"IBM Plex Mono",monospace}
+  .modal .mhead .pcycle{font-family:"IBM Plex Mono",monospace;font-size:12px;opacity:.8;margin-top:4px}
+  .modal .mbody{padding:22px 24px}
+  .feat{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin-bottom:11px}
+  .feat .ck{color:var(--good);font-weight:700}
+  .modal .why{font-size:12px;color:var(--mute);background:var(--paper);border-radius:4px;padding:10px 12px;margin:14px 0 18px;line-height:1.45}
+  .modal .mfoot{font-size:11px;color:var(--mute);text-align:center;margin-top:12px}
+  .x{cursor:pointer;float:right;opacity:.6;font-size:18px;line-height:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">PDH<b>·</b>Pilot</div>
+      <div class="tag">License compliance, on autopilot</div>
+    </div>
+    <div class="hdr-right">
+      <div id="unlockState" class="unlock-state hidden"><span class="dot"></span><span id="unlockStateText"></span></div>
+      <button id="unlockBtn" class="btn btn-primary hidden" style="padding:8px 14px;font-size:13px" onclick="openPaywall()">Unlock this cycle · $49</button>
+      <div id="licPill" class="lic-pill hidden" onclick="resetProfile()"><span>LIC</span><b id="licPillText"></b></div>
+    </div>
+  </header>
+
+  <!-- ONBOARDING -->
+  <section id="onboarding">
+    <div class="hero">
+      <h1>Never lose your license to a <em>missed hour</em>.</h1>
+      <p>Track your Professional Development Hours against your state board's exact rules. Scan a certificate, we read the hours. One flat fee per renewal cycle — no subscription.</p>
+    </div>
+    <div class="card" style="max-width:520px;margin:24px auto 0">
+      <h2>Set up your license</h2>
+      <p class="sub">Free to set up and start logging. Pick your state and discipline — every requirement number is editable after.</p>
+      <div class="field"><label>Discipline</label>
+        <select id="ob-disc"><option value="PE">Professional Engineer (PE)</option><option value="PLS">Professional Land Surveyor (PLS)</option></select>
+      </div>
+      <div class="field"><label>State board</label><select id="ob-state"></select></div>
+      <div class="row">
+        <div class="field"><label>License #</label><input id="ob-licnum" placeholder="e.g. 062-12345"></div>
+        <div class="field"><label>Renewal date</label><input id="ob-renew" type="date"></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="completeOnboarding()">Build my tracker →</button>
+      <p class="disclaimer">Requirement templates are starting points based on common board rules and may change. Always confirm against your state board before relying on them — every value is editable.</p>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
+        <div><h2>Renewal Status</h2><p class="sub" id="cycleSub"></p></div>
+        <div class="countdown"><div class="big" id="daysLeft">—</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em">days<br>to renew</div></div>
+      </div>
+      <div id="statusLine" class="status-line ok"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <h2 style="margin:0">Progress <span class="edit-link" onclick="openReqEdit()">edit requirements</span></h2></div>
+      <div class="gauges">
+        <div class="gauge"><div class="glabel"><span class="gname">Total PDH</span><span class="gnum" id="totNum">0<small>/0</small></span></div><div class="bar"><i id="totBar" style="width:0%"></i></div></div>
+        <div class="gauge"><div class="glabel"><span class="gname">Ethics / Laws &amp; Rules</span><span class="gnum" id="ethNum">0<small>/0</small></span></div><div class="bar"><i id="ethBar" style="width:0%"></i></div></div>
+      </div>
+      <div id="reqEdit" class="hidden" style="margin-top:18px;padding-top:18px;border-top:1px dashed var(--line)">
+        <div class="row">
+          <div class="field"><label>Total PDH required / cycle</label><input id="re-total" type="number" min="0"></div>
+          <div class="field"><label>Ethics hrs required / cycle</label><input id="re-ethics" type="number" min="0"></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="saveReqEdit()">Save</button><button class="btn btn-ghost" onclick="openReqEdit()">Cancel</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Log Hours</h2>
+      <p class="sub">Scan a certificate and the AI fills this in for you — or type it manually.</p>
+      <div class="scan-zone" id="scanZone">
+        <div id="scanLock" class="lock-badge hidden">🔒 unlock</div>
+        <div class="icon">⎙</div>
+        <div style="font-weight:600;margin-top:6px">Drop a certificate image here, or click to upload</div>
+        <div class="scan-note">JPG / PNG. The AI reads the course title, date, hours, and category.</div>
+        <input id="fileInput" type="file" accept="image/*" class="hidden">
+      </div>
+      <div class="scanning" id="scanning"><div class="spin"></div> Reading certificate…</div>
+      <div class="row" style="margin-top:18px">
+        <div class="field"><label>Course / activity title</label><input id="e-title" placeholder="e.g. Geotechnical Engineering Update"></div>
+        <div class="field"><label>Provider</label><input id="e-provider" placeholder="e.g. ASCE"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Date completed</label><input id="e-date" type="date"></div>
+        <div class="field"><label>PDH / hours</label><input id="e-hours" type="number" step="0.5" min="0" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Category</label>
+        <select id="e-cat"><option value="technical">Technical</option><option value="ethics">Ethics / Laws &amp; Rules</option><option value="other">Other / General</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="addEntry()">Add to record</button>
+      <div id="freeMeter" class="free-meter hidden"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h2 style="margin:0">Audit-Ready Record</h2>
+        <button class="btn btn-ghost" onclick="exportCSV()" style="padding:8px 14px;font-size:12px">Export CSV</button>
+      </div>
+      <div id="tableWrap"></div>
+    </div>
+    <p class="foot" id="footText"></p>
+  </section>
+</div>
+
+<!-- PAYWALL -->
+<div class="modal-bg" id="paywall">
+  <div class="modal">
+    <div class="mhead">
+      <span class="x" onclick="closePaywall()">✕</span>
+      <div class="price">$49 <small>one-time</small></div>
+      <div class="pcycle" id="pwCycle"></div>
+    </div>
+    <div class="mbody">
+      <div class="feat"><span class="ck">✓</span><div><b>AI certificate scanning</b> — photograph a cert, we read the hours, date &amp; category automatically</div></div>
+      <div class="feat"><span class="ck">✓</span><div><b>Unlimited hour logging</b> for the entire cycle</div></div>
+      <div class="feat"><span class="ck">✓</span><div><b>Audit-ready CSV export</b> for your board</div></div>
+      <div class="feat"><span class="ck">✓</span><div><b>Deadline tracking</b> until your renewal date</div></div>
+      <div class="why">One flat fee covers your whole renewal cycle — not a subscription. When your next cycle begins, you renew once and you're set again. No recurring charges, nothing to cancel.</div>
+      <button id="checkoutBtn" class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="confirmUnlock()">Continue to secure checkout →</button>
+      <div class="mfoot">Secure one-time payment · 30-day refund if your board rejects your log</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== Pricing model: ONE-TIME $49 per renewal cycle (no subscription) ===== */
+const PRICE=49;
+const FREE_ENTRY_LIMIT=3;            // free tier: log up to 3 entries, manual only
+
+/* ===== Storage: localStorage wrapper matching the async window.storage API ===== */
+const storage = {
+  get: (key) => {
+    const val = localStorage.getItem(key);
+    return Promise.resolve(val !== null ? { value: val } : null);
+  },
+  set: (key, val) => {
+    localStorage.setItem(key, val);
+    return Promise.resolve();
+  }
+};
+
+const STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
+const TEMPLATES={
+  IL:{totalPE:30,ethicsPE:0,totalPLS:30,ethicsPLS:0,cycle:2},
+  TX:{totalPE:15,ethicsPE:1,totalPLS:16,ethicsPLS:1,cycle:1},
+  FL:{totalPE:18,ethicsPE:1,totalPLS:24,ethicsPLS:0,cycle:2},
+  CA:{totalPE:0,ethicsPE:0,totalPLS:0,ethicsPLS:0,cycle:2},
+  NY:{totalPE:36,ethicsPE:0,totalPLS:24,ethicsPLS:0,cycle:3},
+  OH:{totalPE:30,ethicsPE:2,totalPLS:30,ethicsPLS:2,cycle:2},
+  GA:{totalPE:30,ethicsPE:0,totalPLS:30,ethicsPLS:0,cycle:2},
+  NC:{totalPE:15,ethicsPE:0,totalPLS:15,ethicsPLS:0,cycle:1}
+};
+const DEFAULT_TPL={totalPE:30,ethicsPE:2,totalPLS:30,ethicsPLS:2,cycle:2};
+
+let profile=null, entries=[], unlock=null; // unlock = { renew:<date string>, paidAt:<iso> }
+
+async function load(){
+  try{const p=await storage.get('profile');if(p&&p.value)profile=JSON.parse(p.value);}catch(e){}
+  try{const en=await storage.get('entries');if(en&&en.value)entries=JSON.parse(en.value);}catch(e){}
+  try{const u=await storage.get('unlock');if(u&&u.value)unlock=JSON.parse(u.value);}catch(e){}
+}
+async function saveProfile(){try{await storage.set('profile',JSON.stringify(profile));}catch(e){}}
+async function saveEntries(){try{await storage.set('entries',JSON.stringify(entries));}catch(e){}}
+async function saveUnlock(){try{await storage.set('unlock',JSON.stringify(unlock));}catch(e){}}
+
+/* unlocked only while the paid cycle matches the current renewal date */
+function isUnlocked(){return !!(unlock&&profile&&unlock.renew===profile.renew);}
+
+function fillStates(){document.getElementById('ob-state').innerHTML=STATES.map(x=>`<option value="${x}"${x==='IL'?' selected':''}>${x}</option>`).join('');}
+function tplFor(disc,state){const t=TEMPLATES[state]||DEFAULT_TPL;return disc==='PE'?{reqTotal:t.totalPE,reqEthics:t.ethicsPE,cycle:t.cycle}:{reqTotal:t.totalPLS,reqEthics:t.ethicsPLS,cycle:t.cycle};}
+function defaultRenew(c){const d=new Date();d.setFullYear(d.getFullYear()+(c||2));return d.toISOString().slice(0,10);}
+function completeOnboarding(){
+  const disc=document.getElementById('ob-disc').value,state=document.getElementById('ob-state').value,t=tplFor(disc,state);
+  profile={disc,state,licnum:document.getElementById('ob-licnum').value||'—',renew:document.getElementById('ob-renew').value||defaultRenew(t.cycle),reqTotal:t.reqTotal,reqEthics:t.reqEthics,cycle:t.cycle};
+  saveProfile();render();toast('Tracker built — verify your requirement numbers');
+}
+function resetProfile(){if(confirm('Change license setup? Your logged hours are kept.')){render(true);}}
+
+function render(forceOnboard){
+  const onb=document.getElementById('onboarding'),dash=document.getElementById('dashboard'),pill=document.getElementById('licPill');
+  const uBtn=document.getElementById('unlockBtn'),uState=document.getElementById('unlockState');
+  if(!profile||forceOnboard){
+    onb.classList.remove('hidden');dash.classList.add('hidden');pill.classList.add('hidden');uBtn.classList.add('hidden');uState.classList.add('hidden');
+    if(profile){document.getElementById('ob-disc').value=profile.disc;document.getElementById('ob-state').value=profile.state;document.getElementById('ob-licnum').value=profile.licnum==='—'?'':profile.licnum;document.getElementById('ob-renew').value=profile.renew;}
+    return;
+  }
+  onb.classList.add('hidden');dash.classList.remove('hidden');pill.classList.remove('hidden');
+  document.getElementById('licPillText').textContent=`${profile.disc} · ${profile.state}`;
+
+  // unlock header
+  if(isUnlocked()){uState.classList.remove('hidden');uBtn.classList.add('hidden');document.getElementById('unlockStateText').textContent=`Unlocked through ${fmt(profile.renew)}`;}
+  else{uState.classList.add('hidden');uBtn.classList.remove('hidden');}
+
+  const tot=entries.reduce((a,e)=>a+(+e.hours||0),0);
+  const eth=entries.filter(e=>e.cat==='ethics').reduce((a,e)=>a+(+e.hours||0),0);
+  setGauge('tot',tot,profile.reqTotal);setGauge('eth',eth,profile.reqEthics);
+  const days=daysUntil(profile.renew);const dl=document.getElementById('daysLeft');dl.textContent=days;dl.classList.toggle('urgent',days<90);
+  document.getElementById('cycleSub').textContent=`${profile.state} ${profile.disc} · ${profile.cycle}-yr cycle · renews ${fmt(profile.renew)}`;
+
+  const needTot=Math.max(0,profile.reqTotal-tot),needEth=Math.max(0,profile.reqEthics-eth);
+  const sl=document.getElementById('statusLine');
+  if(needTot<=0&&needEth<=0){sl.className='status-line ok';sl.innerHTML='✓ <b>Compliant.</b> You\'ve met every requirement for this cycle. Keep your certificates on file in case of audit.';}
+  else{let p=[];if(needTot>0)p.push(`<b>${needTot} more PDH</b>`);if(needEth>0)p.push(`<b>${needEth} ethics hr${needEth>1?'s':''}</b>`);sl.className='status-line gap';sl.innerHTML=`⚠ You still need ${p.join(' and ')} before ${fmt(profile.renew)}.`;}
+
+  // free-tier affordances
+  document.getElementById('scanLock').classList.toggle('hidden',isUnlocked());
+  const fm=document.getElementById('freeMeter');
+  if(isUnlocked()){fm.classList.add('hidden');}
+  else{fm.classList.remove('hidden');const left=Math.max(0,FREE_ENTRY_LIMIT-entries.length);fm.innerHTML=`Free plan · <b>${left} of ${FREE_ENTRY_LIMIT}</b> entries left · AI scan &amp; export need unlock — <span class="edit-link" onclick="openPaywall()">unlock $49</span>`;}
+
+  renderTable();
+  document.getElementById('totNum').innerHTML=`${trim(tot)}<small>/${profile.reqTotal}</small>`;
+  document.getElementById('ethNum').innerHTML=`${trim(eth)}<small>/${profile.reqEthics}</small>`;
+  document.getElementById('footText').textContent=`PDH·PILOT — record stored privately on this device · ${entries.length} entr${entries.length===1?'y':'ies'} logged`;
+  document.getElementById('pwCycle').textContent=`Covers your full ${profile.state} ${profile.disc} cycle through ${fmt(profile.renew)}`;
+}
+function setGauge(id,have,need){const pct=need>0?Math.min(100,(have/need)*100):(have>0?100:0);const b=document.getElementById(id+'Bar');b.style.width=pct+'%';b.classList.toggle('done',need>0&&have>=need);}
+function renderTable(){
+  const w=document.getElementById('tableWrap');
+  if(!entries.length){w.innerHTML='<div class="empty">No hours logged yet. Add one below to start.</div>';return;}
+  const rows=[...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(e=>`
+    <tr><td>${esc(e.title||'—')}<div style="color:var(--mute);font-size:12px">${esc(e.provider||'')}</div></td>
+    <td class="mono">${e.date?fmt(e.date):'—'}</td><td class="mono">${trim(e.hours)}</td>
+    <td><span class="cat ${e.cat}">${e.cat}</span></td><td><span class="del" onclick="delEntry('${e.id}')">remove</span></td></tr>`).join('');
+  w.innerHTML=`<table><thead><tr><th>Activity</th><th>Date</th><th>PDH</th><th>Category</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function addEntry(){
+  if(!isUnlocked()&&entries.length>=FREE_ENTRY_LIMIT){openPaywall();return;}
+  const title=document.getElementById('e-title').value.trim();const hours=parseFloat(document.getElementById('e-hours').value);
+  if(!title){toast('Add a course title');return;}if(!hours||hours<=0){toast('Add the number of hours');return;}
+  entries.push({id:'e'+Date.now(),title,provider:document.getElementById('e-provider').value.trim(),date:document.getElementById('e-date').value,hours,cat:document.getElementById('e-cat').value});
+  saveEntries();['e-title','e-provider','e-date','e-hours'].forEach(i=>document.getElementById(i).value='');document.getElementById('e-cat').value='technical';
+  render();toast('Logged ✓');
+}
+function delEntry(id){entries=entries.filter(e=>e.id!==id);saveEntries();render();}
+
+function openReqEdit(){const box=document.getElementById('reqEdit');const showing=!box.classList.contains('hidden');box.classList.toggle('hidden');if(!showing){document.getElementById('re-total').value=profile.reqTotal;document.getElementById('re-ethics').value=profile.reqEthics;}}
+function saveReqEdit(){profile.reqTotal=Math.max(0,parseInt(document.getElementById('re-total').value)||0);profile.reqEthics=Math.max(0,parseInt(document.getElementById('re-ethics').value)||0);saveProfile();document.getElementById('reqEdit').classList.add('hidden');render();toast('Requirements updated');}
+
+/* ===== paywall ===== */
+function openPaywall(){document.getElementById('paywall').classList.add('show');}
+function closePaywall(){document.getElementById('paywall').classList.remove('show');}
+
+async function confirmUnlock(){
+  const btn=document.getElementById('checkoutBtn');
+  btn.disabled=true;btn.textContent='Redirecting to checkout…';
+  try{
+    const resp=await fetch('/api/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json'}});
+    if(!resp.ok)throw new Error('Server error '+resp.status);
+    const {url}=await resp.json();
+    window.location.href=url;
+  }catch(err){
+    console.error('checkout error:',err);
+    btn.disabled=false;btn.textContent='Continue to secure checkout →';
+    toast('Checkout failed — please try again');
+  }
+}
+
+/* ===== AI certificate scan (gated) ===== */
+const zone=document.getElementById('scanZone'),fileInput=document.getElementById('fileInput');
+zone.addEventListener('click',()=>{if(!isUnlocked()){openPaywall();return;}fileInput.click();});
+zone.addEventListener('dragover',e=>{e.preventDefault();if(isUnlocked())zone.classList.add('drag');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(!isUnlocked()){openPaywall();return;}if(e.dataTransfer.files[0])scanFile(e.dataTransfer.files[0]);});
+fileInput.addEventListener('change',e=>{if(e.target.files[0])scanFile(e.target.files[0]);});
+
+async function scanFile(file){
+  if(!isUnlocked()){openPaywall();return;}
+  if(!file.type.startsWith('image/')){toast('Please upload an image');return;}
+  const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+  document.getElementById('scanning').style.display='flex';
+  try{
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:file.type,data:b64}},
+        {type:"text",text:"This is a continuing-education / PDH completion certificate. Extract the fields and respond with ONLY a JSON object, no markdown, no preamble. Keys: title (course/activity name), provider (issuing organization), date (completion date as YYYY-MM-DD, empty string if unclear), hours (number of PDH/CE hours as a number), category (one of: technical, ethics, other — use 'ethics' for ethics, laws, rules, or professional conduct content). If a field is unknown use an empty string or 0."}]}]})});
+    const data=await resp.json();
+    const text=(data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('').replace(/```json|```/g,'').trim();
+    const j=JSON.parse(text);
+    if(j.title)document.getElementById('e-title').value=j.title;
+    if(j.provider)document.getElementById('e-provider').value=j.provider;
+    if(j.date)document.getElementById('e-date').value=j.date;
+    if(j.hours)document.getElementById('e-hours').value=j.hours;
+    if(j.category&&['technical','ethics','other'].includes(j.category))document.getElementById('e-cat').value=j.category;
+    toast('Certificate read — check the fields & add');
+  }catch(err){toast('Couldn\'t read it automatically — enter manually');}
+  finally{document.getElementById('scanning').style.display='none';fileInput.value='';}
+}
+
+function exportCSV(){
+  if(!isUnlocked()){openPaywall();return;}
+  if(!entries.length){toast('Nothing to export yet');return;}
+  const head=['Title','Provider','Date','PDH','Category'];
+  const rows=entries.map(e=>[e.title,e.provider,e.date,e.hours,e.cat].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv=[head.join(','),...rows].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`PDH-record-${profile.state}-${profile.disc}.csv`;a.click();toast('Exported');
+}
+
+function daysUntil(d){if(!d)return '—';return Math.ceil((new Date(d)-new Date())/864e5);}
+function fmt(d){if(!d)return '—';return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function trim(n){n=+n||0;return Number.isInteger(n)?n:n.toFixed(1);}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
+document.getElementById('paywall').addEventListener('click',e=>{if(e.target.id==='paywall')closePaywall();});
+
+/* ===== Boot: check for Stripe return, then render ===== */
+(async function(){
+  fillStates();
+  await load();
+
+  const params=new URLSearchParams(window.location.search);
+  const sessionId=params.get('session_id');
+
+  if(sessionId&&profile){
+    try{
+      const resp=await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`);
+      const {paid}=await resp.json();
+      if(paid){
+        unlock={renew:profile.renew,paidAt:new Date().toISOString()};
+        await saveUnlock();
+        window.history.replaceState({},'',window.location.pathname);
+        render();
+        toast('Unlocked for this cycle ✓');
+        return;
+      }
+    }catch(e){/* fall through to normal render */}
+    window.history.replaceState({},'',window.location.pathname);
+  }
+
+  if(params.get('canceled')==='1'){
+    window.history.replaceState({},'',window.location.pathname);
+    toast('Payment canceled');
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
