@@ -229,17 +229,7 @@
 const PRICE=49;
 const FREE_ENTRY_LIMIT=3;            // free tier: log up to 3 entries, manual only
 
-/* ===== Storage: localStorage wrapper matching the async window.storage API ===== */
-const storage = {
-  get: (key) => {
-    const val = localStorage.getItem(key);
-    return Promise.resolve(val !== null ? { value: val } : null);
-  },
-  set: (key, val) => {
-    localStorage.setItem(key, val);
-    return Promise.resolve();
-  }
-};
+/* ===== Storage: localStorage, namespaced to avoid collisions ===== */
 
 const STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
 const TEMPLATES={
@@ -257,13 +247,13 @@ const DEFAULT_TPL={totalPE:30,ethicsPE:2,totalPLS:30,ethicsPLS:2,cycle:2};
 let profile=null, entries=[], unlock=null; // unlock = { renew:<date string>, paidAt:<iso> }
 
 async function load(){
-  try{const p=await storage.get('profile');if(p&&p.value)profile=JSON.parse(p.value);}catch(e){}
-  try{const en=await storage.get('entries');if(en&&en.value)entries=JSON.parse(en.value);}catch(e){}
-  try{const u=await storage.get('unlock');if(u&&u.value)unlock=JSON.parse(u.value);}catch(e){}
+  try{const p=localStorage.getItem('pdhpilot:profile');if(p)profile=JSON.parse(p);}catch(e){}
+  try{const en=localStorage.getItem('pdhpilot:entries');if(en)entries=JSON.parse(en);}catch(e){}
+  try{const u=localStorage.getItem('pdhpilot:unlock');if(u)unlock=JSON.parse(u);}catch(e){}
 }
-async function saveProfile(){try{await storage.set('profile',JSON.stringify(profile));}catch(e){}}
-async function saveEntries(){try{await storage.set('entries',JSON.stringify(entries));}catch(e){}}
-async function saveUnlock(){try{await storage.set('unlock',JSON.stringify(unlock));}catch(e){}}
+async function saveProfile(){try{localStorage.setItem('pdhpilot:profile',JSON.stringify(profile));}catch(e){}}
+async function saveEntries(){try{localStorage.setItem('pdhpilot:entries',JSON.stringify(entries));}catch(e){}}
+async function saveUnlock(){try{localStorage.setItem('pdhpilot:unlock',JSON.stringify(unlock));}catch(e){}}
 
 /* unlocked only while the paid cycle matches the current renewal date */
 function isUnlocked(){return !!(unlock&&profile&&unlock.renew===profile.renew);}
