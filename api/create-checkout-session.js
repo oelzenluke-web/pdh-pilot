@@ -20,10 +20,8 @@ module.exports = async (req, res) => {
 
   const stripe = new Stripe(secretKey, { apiVersion: '2024-06-20' });
 
-  // Derive app URL from request so success/cancel URLs work on any deploy
-  const proto  = req.headers['x-forwarded-proto'] || 'https';
-  const host   = req.headers['x-forwarded-host'] || req.headers.host;
-  const appUrl = `${proto}://${host}`;
+  // Production domain for return URLs
+  const appUrl = 'https://www.pdhpilot.com';
 
   // Clickwrap consent — captured client-side at the moment the user checks the box
   const body = req.body || {};
