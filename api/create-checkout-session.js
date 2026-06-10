@@ -25,13 +25,36 @@ module.exports = async (req, res) => {
   const host   = req.headers['x-forwarded-host'] || req.headers.host;
   const appUrl = `${proto}://${host}`;
 
+  // Clickwrap consent — captured client-side at the moment the user checks the box
+  const body = req.body || {};
+  const tosAcceptedAt = typeof body.tos_accepted_at === 'string' ? body.tos_accepted_at : new Date().toISOString();
+  const tosVersion    = typeof body.tos_version === 'string' ? body.tos_version : 'unknown';
+
+  const baseParams = {
+    mode: 'payment',
+    line_items: [{ price: priceId, quantity: 1 }],
+    metadata: {
+      tos_accepted_at: tosAcceptedAt,
+      tos_version: tosVersion,
+    },
+    success_url: `${appUrl}/?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:  `${appUrl}/?canceled=1`,
+  };
+
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${appUrl}/?canceled=1`,
-    });
+    // Stripe Tax should be on (ToS says tax is added "where applicable").
+    // If the account isn't fully configured for it yet (e.g. missing head
+    // office address in test mode), fall back so checkout still works.
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        ...baseParams,
+        automatic_tax: { enabled: true },
+      });
+    } catch (taxErr) {
+      console.error('create-checkout-session: automatic_tax failed, retrying without it:', taxErr.message);
+      session = await stripe.checkout.sessions.create(baseParams);
+    }
 
     res.json({ url: session.url });
   } catch (err) {

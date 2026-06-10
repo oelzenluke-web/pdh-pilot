@@ -43,6 +43,8 @@
   .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .btn{font-family:"Archivo",sans-serif;font-weight:600;font-size:14px;letter-spacing:.02em;border:none;border-radius:4px;padding:12px 20px;cursor:pointer;transition:transform .08s ease,filter .15s ease}
   .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn:disabled:active{transform:none}
   .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{filter:brightness(1.05)}
   .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}.btn-ghost:hover{border-color:var(--ink)}
   .btn-dark{background:var(--ink);color:var(--paper)}
@@ -216,7 +218,11 @@
       <div class="feat"><span class="ck">✓</span><div><b>Audit-ready CSV export</b> for your board</div></div>
       <div class="feat"><span class="ck">✓</span><div><b>Deadline tracking</b> until your renewal date</div></div>
       <div class="why">One flat fee covers your whole renewal cycle — not a subscription. When your next cycle begins, you renew once and you're set again. No recurring charges, nothing to cancel.</div>
-      <button id="checkoutBtn" class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="confirmUnlock()">Continue to secure checkout →</button>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--mute);margin-bottom:14px;cursor:pointer">
+        <input type="checkbox" id="consentCheck" style="width:auto;margin-top:2px;flex-shrink:0" onchange="document.getElementById('checkoutBtn').disabled=!this.checked">
+        <span>I agree to the <a href="/terms" target="_blank" style="color:var(--accent)">Terms of Service</a> and <a href="/privacy" target="_blank" style="color:var(--accent)">Privacy Policy</a></span>
+      </label>
+      <button id="checkoutBtn" class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="confirmUnlock()" disabled>Continue to secure checkout →</button>
       <div class="mfoot">Secure one-time payment · 30-day refund if your board rejects your log</div>
     </div>
   </div>
@@ -331,14 +337,22 @@ function openReqEdit(){const box=document.getElementById('reqEdit');const showin
 function saveReqEdit(){profile.reqTotal=Math.max(0,parseInt(document.getElementById('re-total').value)||0);profile.reqEthics=Math.max(0,parseInt(document.getElementById('re-ethics').value)||0);saveProfile();document.getElementById('reqEdit').classList.add('hidden');render();toast('Requirements updated');}
 
 /* ===== paywall ===== */
-function openPaywall(){document.getElementById('paywall').classList.add('show');}
+const TOS_VERSION='2026-06-10';
+function openPaywall(){
+  const cb=document.getElementById('consentCheck');
+  cb.checked=false;
+  document.getElementById('checkoutBtn').disabled=true;
+  document.getElementById('paywall').classList.add('show');
+}
 function closePaywall(){document.getElementById('paywall').classList.remove('show');}
 
 async function confirmUnlock(){
   const btn=document.getElementById('checkoutBtn');
+  if(!document.getElementById('consentCheck').checked){toast('Please agree to the Terms and Privacy Policy');return;}
   btn.disabled=true;btn.textContent='Redirecting to checkout…';
   try{
-    const resp=await fetch('/api/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json'}});
+    const resp=await fetch('/api/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tos_accepted_at:new Date().toISOString(),tos_version:TOS_VERSION})});
     if(!resp.ok)throw new Error('Server error '+resp.status);
     const {url}=await resp.json();
     window.location.href=url;

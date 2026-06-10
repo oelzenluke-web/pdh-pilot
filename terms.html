@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — PDH Pilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d1b2a;--paper:#f4f1ea;--panel:#ffffff;--line:#cdd3da;--grid:#dfe4ea;
+    --accent:#e8590c;--accent-soft:#fbe3d4;--mute:#62707d;
+    --shadow:0 1px 0 rgba(13,27,42,.04),0 8px 24px -12px rgba(13,27,42,.25);
+  }
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:"IBM Plex Sans",sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px;color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px}
+  header.top{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:24px;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand .mark{font-family:"Archivo",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;text-decoration:none;color:var(--ink)}
+  .brand .mark b{color:var(--accent)}
+  .back{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mute);text-decoration:none}
+  .back:hover{color:var(--accent)}
+  .draft{background:var(--accent-soft);color:#b54708;border:1px solid var(--accent);border-radius:4px;padding:10px 14px;font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:24px;display:inline-block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:28px 30px;margin-bottom:18px}
+  h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 6px}
+  h2{font-family:"Archivo",sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:26px 0 8px}
+  .meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mute);margin-bottom:0}
+  p,li{font-size:14px;color:var(--ink)}
+  ul{padding-left:20px}
+  .foot{text-align:center;color:var(--mute);font-size:11px;font-family:"IBM Plex Mono",monospace;margin-top:30px;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a href="/" class="brand"><div class="mark">PDH<b>·</b>Pilot</div></a>
+    <a href="/" class="back">← Back to app</a>
+  </header>
+
+  <span class="draft">Draft — pending final review</span>
+
+  <div class="card">
+    <h1>Terms of Service</h1>
+    <p class="meta">Version: 2026-06-10 (draft)</p>
+
+    <h2>1. The Service</h2>
+    <p>PDH Pilot ("the App") is a tool that helps licensed Professional Engineers (PE) and Professional Land Surveyors (PLS) track Professional Development Hours (PDH) against their state board's continuing education requirements. The App is provided "as is" for informational and organizational purposes only.</p>
+
+    <h2>2. Not Professional or Regulatory Advice</h2>
+    <p>Requirement templates (hours required, ethics requirements, cycle lengths, renewal dates) are starting points based on commonly published state board rules and may be inaccurate, outdated, or incomplete. You are solely responsible for verifying your continuing education requirements directly with your state licensing board and for the accuracy of any records you submit to that board. The App does not guarantee compliance with any licensing requirement.</p>
+
+    <h2>3. Pricing — One-Time Purchase Per Renewal Cycle</h2>
+    <p>The App offers a free tier (up to 3 manually-logged entries) and a one-time paid unlock of $49 USD that covers AI certificate scanning, unlimited hour logging, audit-ready CSV export, and deadline tracking for a single renewal cycle, as defined by the renewal date in your profile. This is not a subscription — no recurring charges are made. When your renewal date changes to a new cycle, a new one-time purchase is required to unlock that cycle's features.</p>
+    <p>Where applicable, sales tax is calculated and added to the purchase price at checkout via Stripe Tax.</p>
+
+    <h2>4. Refunds</h2>
+    <p>If your state licensing board rejects your continuing education log produced using the App, you may request a full refund within 30 days of purchase. Refund requests should include documentation of the board's rejection.</p>
+
+    <h2>5. AI Certificate Scanning</h2>
+    <p>The certificate-scanning feature sends an image you upload to a third-party AI service for the sole purpose of extracting course title, provider, date, hours, and category. Extracted data may be inaccurate and you are responsible for reviewing and correcting it before relying on it.</p>
+
+    <h2>6. Data Storage</h2>
+    <p>Your profile, logged hours, and unlock status are stored locally on your device using browser storage (localStorage). The App does not maintain a server-side account or database of your records. See the <a href="/privacy">Privacy Policy</a> for details.</p>
+
+    <h2>7. Acceptable Use</h2>
+    <p>You agree not to use the App for any unlawful purpose or in a way that violates the rights of others.</p>
+
+    <h2>8. Changes to These Terms</h2>
+    <p>We may update these Terms from time to time. Continued use of the App after changes take effect constitutes acceptance of the revised Terms.</p>
+
+    <h2>9. Contact</h2>
+    <p>Questions about these Terms can be sent to the contact address listed on the PDH Pilot website.</p>
+  </div>
+
+  <p class="foot">PDH·PILOT — this page is a draft and has not been finalized by the account owner</p>
+</div>
+</body>
+</html>
