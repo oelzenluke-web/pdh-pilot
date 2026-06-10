@@ -24,13 +24,14 @@
   .brand .mark b{color:var(--accent)}
   .back{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mute);text-decoration:none}
   .back:hover{color:var(--accent)}
-  .draft{background:var(--accent-soft);color:#b54708;border:1px solid var(--accent);border-radius:4px;padding:10px 14px;font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:24px;display:inline-block}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:28px 30px;margin-bottom:18px}
   h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 6px}
   h2{font-family:"Archivo",sans-serif;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.04em;margin:26px 0 8px}
   .meta{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mute);margin-bottom:0}
   p,li{font-size:14px;color:var(--ink)}
   ul{padding-left:20px}
+  .callout{background:var(--accent-soft);border:1px solid var(--accent);border-radius:4px;padding:12px 14px;font-size:13px;line-height:1.5;margin:8px 0 16px}
+  a{color:var(--accent)}
   .foot{text-align:center;color:var(--mute);font-size:11px;font-family:"IBM Plex Mono",monospace;margin-top:30px;letter-spacing:.05em}
 </style>
 </head>
@@ -41,42 +42,84 @@
     <a href="/" class="back">← Back to app</a>
   </header>
 
-  <span class="draft">Draft — pending final review</span>
-
   <div class="card">
     <h1>Terms of Service</h1>
-    <p class="meta">Version: 2026-06-10 (draft)</p>
+    <p class="meta">Effective date: June 10, 2026</p>
 
-    <h2>1. The Service</h2>
-    <p>PDH Pilot ("the App") is a tool that helps licensed Professional Engineers (PE) and Professional Land Surveyors (PLS) track Professional Development Hours (PDH) against their state board's continuing education requirements. The App is provided "as is" for informational and organizational purposes only.</p>
+    <p>These Terms of Service ("Terms") govern your access to and use of PDH Pilot (the "Service"), operated by PDH Pilot ("we," "us," or "our"), available at pdhpilot.com. By purchasing access or otherwise using the Service, you agree to these Terms. If you do not agree, do not use the Service.</p>
 
-    <h2>2. Not Professional or Regulatory Advice</h2>
-    <p>Requirement templates (hours required, ethics requirements, cycle lengths, renewal dates) are starting points based on commonly published state board rules and may be inaccurate, outdated, or incomplete. You are solely responsible for verifying your continuing education requirements directly with your state licensing board and for the accuracy of any records you submit to that board. The App does not guarantee compliance with any licensing requirement.</p>
+    <h2>1. What the Service is</h2>
+    <p>PDH Pilot is a record-keeping and tracking tool that lets licensed professionals — primarily Professional Engineers (PEs) and Registered Professional Land Surveyors (RPLSs) — log continuing-education / Professional Development Hours (PDH) and compare their logged hours against requirement figures associated with a selected jurisdiction. The Service includes an optional feature that uses artificial intelligence to extract information from certificate images you upload.</p>
 
-    <h2>3. Pricing — One-Time Purchase Per Renewal Cycle</h2>
-    <p>The App offers a free tier (up to 3 manually-logged entries) and a one-time paid unlock of $49 USD that covers AI certificate scanning, unlimited hour logging, audit-ready CSV export, and deadline tracking for a single renewal cycle, as defined by the renewal date in your profile. This is not a subscription — no recurring charges are made. When your renewal date changes to a new cycle, a new one-time purchase is required to unlock that cycle's features.</p>
-    <p>Where applicable, sales tax is calculated and added to the purchase price at checkout via Stripe Tax.</p>
+    <h2>2. The Service is a tool, not a compliance authority</h2>
+    <p>The Service helps you organize and track information <strong>you</strong> enter and review. It does not interact with, report to, or receive information from any state licensing board. Completing or "meeting" a requirement inside the Service has no legal effect on your license. Only your licensing board determines whether you have satisfied its requirements.</p>
 
-    <h2>4. Refunds</h2>
-    <p>If your state licensing board rejects your continuing education log produced using the App, you may request a full refund within 30 days of purchase. Refund requests should include documentation of the board's rejection.</p>
+    <h2>3. Eligibility</h2>
+    <p>You must be at least 18 years old and capable of forming a binding contract to use the Service. You are responsible for the accuracy of the information you provide.</p>
 
-    <h2>5. AI Certificate Scanning</h2>
-    <p>The certificate-scanning feature sends an image you upload to a third-party AI service for the sole purpose of extracting course title, provider, date, hours, and category. Extracted data may be inaccurate and you are responsible for reviewing and correcting it before relying on it.</p>
+    <h2>4. No professional, legal, or compliance advice; your responsibility to verify</h2>
+    <div class="callout"><strong>This section is important. Please read it.</strong></div>
+    <ul>
+      <li>The requirement figures, categories, carryover and self-study limits, renewal dates, and any other rule information shown in the Service are provided for general informational and organizational purposes only. They are <strong>not</strong> legal advice, compliance advice, or a representation that they are current, complete, or correct.</li>
+      <li>Licensing-board rules change, sometimes without public notice, and vary by jurisdiction, license type, and individual circumstance. <strong>You are solely responsible for independently confirming your own continuing-education requirements directly with your licensing board, and for determining whether any activity you log actually qualifies.</strong></li>
+      <li>You acknowledge that the requirement values in the Service are editable defaults, that you may need to correct them, and that you should not rely on them without verifying them against your board.</li>
+      <li>Fields extracted from certificate images by the AI feature are suggestions only and may contain errors. You are responsible for reviewing and correcting extracted fields before saving any record, and each saved record reflects information you have confirmed.</li>
+      <li>The Service does not guarantee that using it will result in your license being renewed, that your records will be accepted in an audit, or that you will be found in compliance.</li>
+    </ul>
 
-    <h2>6. Data Storage</h2>
-    <p>Your profile, logged hours, and unlock status are stored locally on your device using browser storage (localStorage). The App does not maintain a server-side account or database of your records. See the <a href="/privacy">Privacy Policy</a> for details.</p>
+    <h2>5. Payment, access period, and taxes</h2>
+    <ul>
+      <li>The Service is offered on a <strong>one-time payment per renewal cycle</strong> basis. Paying the stated fee unlocks the paid features for the renewal cycle associated with your selected renewal date. It is <strong>not</strong> a recurring subscription; you will not be automatically charged again. When you enter a new renewal cycle, a new one-time payment is required to unlock features for that cycle.</li>
+      <li>Prices are stated exclusive of tax. Where applicable, sales tax is calculated and added at checkout.</li>
+      <li>Payments are processed by our third-party payment processor (Stripe). We do not receive or store your full payment-card details. Your use of the payment process is also subject to the processor's terms.</li>
+    </ul>
 
-    <h2>7. Acceptable Use</h2>
-    <p>You agree not to use the App for any unlawful purpose or in a way that violates the rights of others.</p>
+    <h2>6. Refunds</h2>
+    <p>If you are not satisfied, you may request a refund within <strong>fourteen (14) days</strong> of purchase by emailing <a href="mailto:lroventuresgroup@gmail.com">lroventuresgroup@gmail.com</a>. Refunds are at our reasonable discretion and apply to the most recent one-time purchase. Because requirement verification is your responsibility under Section 4, we do not offer refunds on the basis that a licensing board rejected or did not accept your records.</p>
+    <p>If we permanently discontinue the Service before the end of a renewal cycle for which you have paid, you will be entitled, upon request, to a pro-rata refund of that purchase reflecting the unused portion of your cycle.</p>
 
-    <h2>8. Changes to These Terms</h2>
-    <p>We may update these Terms from time to time. Continued use of the App after changes take effect constitutes acceptance of the revised Terms.</p>
+    <h2>7. Acceptable use</h2>
+    <p>You agree not to: use the Service for any unlawful purpose; upload content you do not have the right to upload; attempt to disrupt, reverse-engineer, or gain unauthorized access to the Service; resell or redistribute the Service without our written permission; or upload material that is not a genuine continuing-education record.</p>
 
-    <h2>9. Contact</h2>
-    <p>Questions about these Terms can be sent to the contact address listed on the PDH Pilot website.</p>
+    <h2>8. Your content</h2>
+    <p>You retain ownership of the information and files you upload ("Your Content"). You grant us a limited license to process Your Content solely to provide the Service to you, including transmitting certificate images to our AI provider for the sole purpose of extracting record fields (see the <a href="/privacy">Privacy Policy</a>). You are responsible for keeping your own backup copies of your records and underlying certificates; the licensing board requires you, not us, to retain them.</p>
+
+    <h2>9. Third-party services</h2>
+    <p>The Service relies on third parties including a payment processor (Stripe), an AI processing provider (Anthropic), and a hosting provider. Their handling of data is governed by their own terms and privacy policies. We are not responsible for the acts or omissions of third-party services.</p>
+
+    <h2>10. Disclaimer of warranties</h2>
+    <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING WITHOUT LIMITATION IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE OR ANY INFORMATION IN IT (INCLUDING REQUIREMENT FIGURES OR AI-EXTRACTED DATA) IS ACCURATE, CURRENT, COMPLETE, OR ERROR-FREE, OR THAT THE SERVICE WILL BE UNINTERRUPTED.</p>
+
+    <h2>11. Limitation of liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, PDH PILOT AND ITS OPERATOR WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, LICENSURE, INCOME, GOODWILL, OR DATA, ARISING OUT OF OR RELATED TO YOUR USE OF (OR INABILITY TO USE) THE SERVICE — INCLUDING ANY CLAIM THAT YOU RELIED ON INFORMATION IN THE SERVICE — WHETHER BASED IN CONTRACT, TORT, OR ANY OTHER THEORY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. OUR TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS RELATING TO THE SERVICE WILL NOT EXCEED THE AMOUNT YOU PAID US IN THE TWELVE (12) MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM.</p>
+    <p>Some jurisdictions do not allow certain limitations, so some of the above may not apply to you.</p>
+
+    <h2>12. Indemnification</h2>
+    <p>You agree to indemnify and hold harmless PDH Pilot and its operator from any claims, losses, or expenses (including reasonable attorneys' fees) arising from your use of the Service or your violation of these Terms.</p>
+
+    <h2>13. Changes to the Service and these Terms</h2>
+    <p>We may modify or discontinue the Service, and may update these Terms, at any time, subject to Section 6 (pro-rata refund on permanent discontinuation during a paid cycle). Material changes to the Terms will be posted at pdhpilot.com with an updated effective date. Continued use after changes take effect constitutes acceptance.</p>
+
+    <h2>14. Termination</h2>
+    <p>We may suspend or terminate your access if you violate these Terms. You may stop using the Service at any time.</p>
+
+    <h2>15. Governing law and disputes</h2>
+    <p>These Terms are governed by the laws of the State of Illinois, without regard to its conflict-of-laws rules. The parties consent to the exclusive jurisdiction of the state and federal courts located in Monroe County, Illinois for any dispute not subject to arbitration.</p>
+
+    <h2>16. General provisions</h2>
+    <ul>
+      <li><strong>Severability.</strong> If any provision of these Terms is held unenforceable, that provision will be enforced to the maximum extent permissible and the remaining provisions will remain in full force and effect.</li>
+      <li><strong>Entire agreement.</strong> These Terms, together with the Privacy Policy, constitute the entire agreement between you and us regarding the Service and supersede any prior agreements or understandings.</li>
+      <li><strong>Assignment.</strong> You may not assign these Terms without our written consent. We may assign these Terms in connection with a merger, acquisition, reorganization, or sale of assets.</li>
+      <li><strong>No waiver.</strong> Our failure to enforce any provision is not a waiver of our right to enforce it later.</li>
+      <li><strong>Survival.</strong> Sections 4, 6 (refund rights accrued), 8, 10, 11, 12, 15, and 16 survive termination.</li>
+    </ul>
+
+    <h2>17. Contact</h2>
+    <p>Questions about these Terms: <a href="mailto:lroventuresgroup@gmail.com">lroventuresgroup@gmail.com</a></p>
   </div>
 
-  <p class="foot">PDH·PILOT — this page is a draft and has not been finalized by the account owner</p>
+  <p class="foot">PDH·PILOT</p>
 </div>
 </body>
 </html>
