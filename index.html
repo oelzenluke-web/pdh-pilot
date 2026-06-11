@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --ink:#0d1b2a;--paper:#f4f1ea;--panel:#ffffff;--line:#cdd3da;--grid:#dfe4ea;
@@ -131,6 +132,7 @@
         <select id="ob-disc"><option value="PE">Professional Engineer (PE)</option><option value="PLS">Professional Land Surveyor (PLS)</option></select>
       </div>
       <div class="field"><label>State board</label><select id="ob-state"></select></div>
+      <div class="field"><label>Your name <span style="text-transform:none;letter-spacing:normal">(optional, for your audit package)</span></label><input id="ob-name" placeholder="e.g. Jane Smith, PE"></div>
       <div class="row">
         <div class="field"><label>License #</label><input id="ob-licnum" placeholder="e.g. 062-12345"></div>
         <div class="field"><label>Renewal date</label><input id="ob-renew" type="date"></div>
@@ -189,14 +191,22 @@
       <div class="field"><label>Category</label>
         <select id="e-cat"><option value="technical">Technical</option><option value="ethics">Ethics / Laws &amp; Rules</option><option value="other">Other / General</option></select>
       </div>
+      <div class="field">
+        <label>Attach certificate <span style="text-transform:none;letter-spacing:normal">(optional — saved on this device for your audit package)</span></label>
+        <input id="e-cert" type="file" accept="image/*" onchange="attachCertFile(this.files[0])">
+        <div id="e-cert-status" class="scan-note hidden"></div>
+      </div>
       <button class="btn btn-primary" onclick="addEntry()">Add to record</button>
       <div id="freeMeter" class="free-meter hidden"></div>
     </div>
 
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h2 style="margin:0">Audit-Ready Record</h2>
-        <button class="btn btn-ghost" onclick="exportCSV()" style="padding:8px 14px;font-size:12px">Export CSV</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <h2 style="margin:0">Your Record</h2>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="exportCSV()" style="padding:8px 14px;font-size:12px">Export CSV</button>
+          <button class="btn btn-dark" onclick="generateAuditPackage()" style="padding:8px 14px;font-size:12px">Generate Audit Package</button>
+        </div>
       </div>
       <div id="tableWrap"></div>
     </div>
@@ -213,9 +223,10 @@
       <div class="pcycle" id="pwCycle"></div>
     </div>
     <div class="mbody">
+      <div class="feat"><span class="ck">✓</span><div><b>One-click audit package</b> — every certificate, your full log, and your hours summary in a single PDF</div></div>
       <div class="feat"><span class="ck">✓</span><div><b>AI certificate scanning</b> — photograph a cert, we read the hours, date &amp; category automatically</div></div>
       <div class="feat"><span class="ck">✓</span><div><b>Unlimited hour logging</b> for the entire cycle</div></div>
-      <div class="feat"><span class="ck">✓</span><div><b>Audit-ready CSV export</b> for your board</div></div>
+      <div class="feat"><span class="ck">✓</span><div><b>CSV export</b> of your full record</div></div>
       <div class="feat"><span class="ck">✓</span><div><b>Deadline tracking</b> until your renewal date</div></div>
       <div class="why">One flat fee covers your whole renewal cycle — not a subscription. When your next cycle begins, you renew once and you're set again. No recurring charges, nothing to cancel.</div>
       <div style="font-size:13px;padding:12px 14px;border-radius:4px;line-height:1.5;background:var(--accent-soft);border:1px solid var(--accent);margin-bottom:14px;color:var(--ink)">
@@ -271,6 +282,63 @@ async function saveProfile(){try{localStorage.setItem('pdhpilot:profile',JSON.st
 async function saveEntries(){try{localStorage.setItem('pdhpilot:entries',JSON.stringify(entries));}catch(e){}}
 async function saveUnlock(){try{localStorage.setItem('pdhpilot:unlock',JSON.stringify(unlock));}catch(e){}}
 
+/* ===== Certificate image storage (IndexedDB) =====
+   Stores downscaled certificate images keyed by entry id, on this device only. */
+const CERT_DB='pdhpilot-certs', CERT_STORE='certs';
+let certIds=new Set();
+let pendingCert=null; // {b64,mediaType} attached to the next entry added
+function openCertDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(CERT_DB,1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(CERT_STORE))req.result.createObjectStore(CERT_STORE);};
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+async function setCert(id,data){
+  try{
+    const db=await openCertDB();
+    return new Promise((res,rej)=>{const tx=db.transaction(CERT_STORE,'readwrite');tx.objectStore(CERT_STORE).put(data,id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});
+  }catch(e){console.error('setCert error:',e);}
+}
+async function getCert(id){
+  try{
+    const db=await openCertDB();
+    return new Promise((res,rej)=>{const tx=db.transaction(CERT_STORE,'readonly');const r=tx.objectStore(CERT_STORE).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+  }catch(e){console.error('getCert error:',e);return null;}
+}
+async function delCert(id){
+  try{
+    const db=await openCertDB();
+    return new Promise((res,rej)=>{const tx=db.transaction(CERT_STORE,'readwrite');tx.objectStore(CERT_STORE).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});
+  }catch(e){console.error('delCert error:',e);}
+}
+async function loadCertIds(){
+  try{
+    const db=await openCertDB();
+    const ids=await new Promise((res,rej)=>{const tx=db.transaction(CERT_STORE,'readonly');const r=tx.objectStore(CERT_STORE).getAllKeys();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+    certIds=new Set(ids);
+  }catch(e){console.error('loadCertIds error:',e);certIds=new Set();}
+}
+function loadImage(src){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=src;});}
+
+/* Manual-entry "attach certificate" control — downscales and queues the image
+   to be saved (in IndexedDB, on this device) once the entry is added. */
+async function attachCertFile(file){
+  const status=document.getElementById('e-cert-status');
+  if(!file){pendingCert=null;status.classList.add('hidden');status.textContent='';return;}
+  if(!file.type.startsWith('image/')){toast('Please choose an image file');document.getElementById('e-cert').value='';return;}
+  try{
+    pendingCert=await downscaleImage(file);
+    status.classList.remove('hidden');
+    status.textContent=`Attached: ${file.name} — will be saved with this entry`;
+  }catch(e){
+    console.error('attachCertFile error:',e);
+    toast('Could not read that image');
+    pendingCert=null;document.getElementById('e-cert').value='';status.classList.add('hidden');
+  }
+}
+
 /* unlocked only while the paid cycle matches the current renewal date */
 function isUnlocked(){return !!(unlock&&profile&&unlock.renew===profile.renew);}
 
@@ -279,7 +347,7 @@ function tplFor(disc,state){const t=TEMPLATES[state]||DEFAULT_TPL;return disc===
 function defaultRenew(c){const d=new Date();d.setFullYear(d.getFullYear()+(c||2));return d.toISOString().slice(0,10);}
 function completeOnboarding(){
   const disc=document.getElementById('ob-disc').value,state=document.getElementById('ob-state').value,t=tplFor(disc,state);
-  profile={disc,state,licnum:document.getElementById('ob-licnum').value||'—',renew:document.getElementById('ob-renew').value||defaultRenew(t.cycle),reqTotal:t.reqTotal,reqEthics:t.reqEthics,cycle:t.cycle};
+  profile={disc,state,name:document.getElementById('ob-name').value.trim(),licnum:document.getElementById('ob-licnum').value||'—',renew:document.getElementById('ob-renew').value||defaultRenew(t.cycle),reqTotal:t.reqTotal,reqEthics:t.reqEthics,cycle:t.cycle};
   saveProfile();render();toast('Tracker built — verify your requirement numbers');
 }
 function resetProfile(){if(confirm('Change license setup? Your logged hours are kept.')){render(true);}}
@@ -289,7 +357,7 @@ function render(forceOnboard){
   const uBtn=document.getElementById('unlockBtn'),uState=document.getElementById('unlockState');
   if(!profile||forceOnboard){
     onb.classList.remove('hidden');dash.classList.add('hidden');pill.classList.add('hidden');uBtn.classList.add('hidden');uState.classList.add('hidden');
-    if(profile){document.getElementById('ob-disc').value=profile.disc;document.getElementById('ob-state').value=profile.state;document.getElementById('ob-licnum').value=profile.licnum==='—'?'':profile.licnum;document.getElementById('ob-renew').value=profile.renew;}
+    if(profile){document.getElementById('ob-disc').value=profile.disc;document.getElementById('ob-state').value=profile.state;document.getElementById('ob-name').value=profile.name||'';document.getElementById('ob-licnum').value=profile.licnum==='—'?'':profile.licnum;document.getElementById('ob-renew').value=profile.renew;}
     return;
   }
   onb.classList.add('hidden');dash.classList.remove('hidden');pill.classList.remove('hidden');
@@ -327,21 +395,33 @@ function renderTable(){
   const w=document.getElementById('tableWrap');
   if(!entries.length){w.innerHTML='<div class="empty">No hours logged yet. Add one below to start.</div>';return;}
   const rows=[...entries].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(e=>`
-    <tr><td>${esc(e.title||'—')}<div style="color:var(--mute);font-size:12px">${esc(e.provider||'')}</div></td>
+    <tr><td>${esc(e.title||'—')}${certIds.has(e.id)?' <span title="Certificate attached" class="mono" style="color:var(--good)">📎</span>':''}<div style="color:var(--mute);font-size:12px">${esc(e.provider||'')}</div></td>
     <td class="mono">${e.date?fmt(e.date):'—'}</td><td class="mono">${trim(e.hours)}</td>
     <td><span class="cat ${e.cat}">${e.cat}</span></td><td><span class="del" onclick="delEntry('${e.id}')">remove</span></td></tr>`).join('');
   w.innerHTML=`<table><thead><tr><th>Activity</th><th>Date</th><th>PDH</th><th>Category</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function addEntry(){
+async function addEntry(){
   if(!isUnlocked()&&entries.length>=FREE_ENTRY_LIMIT){openPaywall();return;}
   const title=document.getElementById('e-title').value.trim();const hours=parseFloat(document.getElementById('e-hours').value);
   if(!title){toast('Add a course title');return;}if(!hours||hours<=0){toast('Add the number of hours');return;}
-  entries.push({id:'e'+Date.now(),title,provider:document.getElementById('e-provider').value.trim(),date:document.getElementById('e-date').value,hours,cat:document.getElementById('e-cat').value});
-  saveEntries();['e-title','e-provider','e-date','e-hours'].forEach(i=>document.getElementById(i).value='');document.getElementById('e-cat').value='technical';
+  const id='e'+Date.now();
+  entries.push({id,title,provider:document.getElementById('e-provider').value.trim(),date:document.getElementById('e-date').value,hours,cat:document.getElementById('e-cat').value});
+  saveEntries();
+  if(pendingCert){
+    await setCert(id,pendingCert);
+    certIds.add(id);
+    pendingCert=null;
+  }
+  ['e-title','e-provider','e-date','e-hours','e-cert'].forEach(i=>document.getElementById(i).value='');document.getElementById('e-cat').value='technical';
+  document.getElementById('e-cert-status').classList.add('hidden');document.getElementById('e-cert-status').textContent='';
   render();toast('Logged ✓');
 }
-function delEntry(id){entries=entries.filter(e=>e.id!==id);saveEntries();render();}
+async function delEntry(id){
+  entries=entries.filter(e=>e.id!==id);saveEntries();
+  if(certIds.has(id)){await delCert(id);certIds.delete(id);}
+  render();
+}
 
 function openReqEdit(){const box=document.getElementById('reqEdit');const showing=!box.classList.contains('hidden');box.classList.toggle('hidden');if(!showing){document.getElementById('re-total').value=profile.reqTotal;document.getElementById('re-ethics').value=profile.reqEthics;}}
 function saveReqEdit(){profile.reqTotal=Math.max(0,parseInt(document.getElementById('re-total').value)||0);profile.reqEthics=Math.max(0,parseInt(document.getElementById('re-ethics').value)||0);saveProfile();document.getElementById('reqEdit').classList.add('hidden');render();toast('Requirements updated');}
@@ -439,9 +519,148 @@ async function scanFile(file){
     if(j.date)document.getElementById('e-date').value=j.date;
     if(j.hours)document.getElementById('e-hours').value=j.hours;
     if(j.category&&['technical','ethics','other'].includes(j.category))document.getElementById('e-cat').value=j.category;
+    pendingCert={b64,mediaType};
+    const status=document.getElementById('e-cert-status');
+    status.classList.remove('hidden');status.textContent='Scanned certificate will be saved with this entry';
     toast('Certificate read — check the fields & add');
   }catch(err){toast('Couldn\'t read it automatically — enter manually');}
   finally{document.getElementById('scanning').style.display='none';fileInput.value='';}
+}
+
+/* ===== Generate Audit Package (paid feature, fully client-side) =====
+   Builds a 3-part PDF: cover/summary, activity log, then one page per
+   stored certificate image, ending with a list of entries logged without
+   an attached certificate. Nothing leaves the device. */
+async function generateAuditPackage(){
+  if(!isUnlocked()){openPaywall();return;}
+  if(!entries.length){toast('Log at least one entry first');return;}
+  if(!window.jspdf||!window.jspdf.jsPDF){toast('PDF library failed to load — check your connection and try again');return;}
+  toast('Generating your audit package…');
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'letter'});
+    const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight(),M=50;
+
+    const tot=entries.reduce((a,e)=>a+(+e.hours||0),0);
+    const eth=entries.filter(e=>e.cat==='ethics').reduce((a,e)=>a+(+e.hours||0),0);
+    const compliant=tot>=profile.reqTotal&&eth>=profile.reqEthics;
+
+    // ---- Page 1: cover / summary ----
+    doc.setFont('helvetica','bold');doc.setFontSize(20);
+    doc.text('Continuing Education Record',M,70);
+    doc.setFont('helvetica','normal');doc.setFontSize(11);
+    let y=110;
+    const line=(label,val)=>{doc.setFont('helvetica','bold');doc.text(label,M,y);doc.setFont('helvetica','normal');doc.text(String(val),M+170,y);y+=20;};
+    line('Name:',profile.name||'—');
+    line('License #:',profile.licnum&&profile.licnum!=='—'?profile.licnum:'—');
+    line('Discipline:',profile.disc==='PE'?'Professional Engineer (PE)':'Professional Land Surveyor (PLS)');
+    line('Jurisdiction:',profile.state);
+    line('Renewal date:',fmt(profile.renew));
+    line('Cycle length:',profile.cycle+' year(s)');
+    y+=12;
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('Requirements vs. Logged Hours',M,y);y+=22;
+    doc.setFont('helvetica','normal');doc.setFontSize(11);
+    line('Total PDH required:',trim(profile.reqTotal));
+    line('Total PDH logged:',trim(tot));
+    line('Ethics hours required:',trim(profile.reqEthics));
+    line('Ethics hours logged:',trim(eth));
+    y+=4;
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(compliant?'#1b7f5e':'#b54708');
+    doc.text(compliant?'Status: requirements met based on logged hours':'Status: requirements not yet met based on logged hours',M,y);
+    doc.setTextColor('#0d1b2a');doc.setFont('helvetica','normal');
+    y+=24;doc.setFontSize(10);
+    doc.text('Generated on '+new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),M,y);
+
+    doc.setFontSize(9);doc.setTextColor('#62707d');
+    const disclaimer='This record is self-reported by the licensee and compiled by PDH Pilot, a record-keeping tool. It is not a determination of compliance by any licensing board. Verify all requirements directly with your board.';
+    doc.text(doc.splitTextToSize(disclaimer,W-2*M),M,H-80);
+    doc.setFontSize(8);
+    doc.text('PDH Pilot — pdhpilot.com',M,H-30);
+    doc.setTextColor('#0d1b2a');
+
+    // ---- Page 2+: activity log ----
+    doc.addPage();
+    y=60;
+    doc.setFont('helvetica','bold');doc.setFontSize(16);
+    doc.text('Activity Log',M,y);y+=28;
+    const cols=[M,M+260,M+360,M+430];
+    const drawHeader=()=>{
+      doc.setFontSize(9);doc.setFont('helvetica','bold');
+      doc.text('Title / Provider',cols[0],y);
+      doc.text('Date',cols[1],y);
+      doc.text('PDH',cols[2],y);
+      doc.text('Category',cols[3],y);
+      y+=6;doc.setDrawColor('#cdd3da');doc.line(M,y,W-M,y);y+=14;
+      doc.setFont('helvetica','normal');
+    };
+    drawHeader();
+    const sorted=[...entries].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const subtotals={technical:0,ethics:0,other:0};
+    for(const e of sorted){
+      subtotals[e.cat]=(subtotals[e.cat]||0)+(+e.hours||0);
+      const titleLines=doc.splitTextToSize(e.title||'—',245);
+      const rowH=Math.max(20,titleLines.length*11+(e.provider?11:0)+4);
+      if(y+rowH>H-60){doc.addPage();y=60;drawHeader();}
+      doc.setFontSize(9);doc.setTextColor('#0d1b2a');
+      doc.text(titleLines,cols[0],y);
+      if(e.provider){doc.setFontSize(8);doc.setTextColor('#62707d');doc.text(e.provider,cols[0],y+titleLines.length*11);doc.setTextColor('#0d1b2a');doc.setFontSize(9);}
+      doc.text(e.date?fmt(e.date):'—',cols[1],y);
+      doc.text(trim(e.hours).toString(),cols[2],y);
+      doc.text(e.cat,cols[3],y);
+      y+=rowH;
+    }
+    y+=8;doc.setDrawColor('#cdd3da');doc.line(M,y,W-M,y);y+=18;
+    doc.setFont('helvetica','bold');doc.setFontSize(10);
+    if(y>H-60){doc.addPage();y=60;}
+    doc.text(`Subtotals — Technical: ${trim(subtotals.technical||0)}   Ethics: ${trim(subtotals.ethics||0)}   Other: ${trim(subtotals.other||0)}`,M,y);y+=18;
+    doc.text(`Grand total: ${trim(tot)} PDH`,M,y);
+
+    // ---- Certificate pages ----
+    const withCert=sorted.filter(e=>certIds.has(e.id));
+    const withoutCert=sorted.filter(e=>!certIds.has(e.id));
+    for(const e of withCert){
+      const cert=await getCert(e.id);
+      if(!cert||!cert.b64)continue;
+      doc.addPage();
+      const dataUrl='data:'+cert.mediaType+';base64,'+cert.b64;
+      try{
+        const img=await loadImage(dataUrl);
+        const maxW=W-2*M,maxH=H-130;
+        const scale=Math.min(maxW/img.width,maxH/img.height,1);
+        const iw=img.width*scale,ih=img.height*scale;
+        doc.addImage(dataUrl,'JPEG',(W-iw)/2,50,iw,ih);
+        let cy=50+ih+24;
+        doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor('#0d1b2a');
+        doc.text(e.title||'—',M,cy);cy+=15;
+        doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor('#62707d');
+        doc.text(`${e.provider?e.provider+' · ':''}${e.date?fmt(e.date):'—'} · ${trim(e.hours)} PDH · ${e.cat}`,M,cy);
+        doc.setTextColor('#0d1b2a');
+      }catch(imgErr){console.error('audit package: failed to render cert image for',e.id,imgErr);}
+    }
+
+    if(withoutCert.length){
+      doc.addPage();y=60;
+      doc.setFont('helvetica','bold');doc.setFontSize(14);
+      doc.text('Logged Without Attached Certificate',M,y);y+=22;
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor('#62707d');
+      doc.text('These entries were logged in PDH Pilot but do not have a certificate image attached on this device.',M,y);
+      doc.setTextColor('#0d1b2a');y+=26;
+      doc.setFontSize(10);
+      for(const e of withoutCert){
+        if(y>H-50){doc.addPage();y=60;}
+        const t=doc.splitTextToSize(`${e.title||'—'} — ${e.date?fmt(e.date):'—'} — ${trim(e.hours)} PDH — ${e.cat}`,W-2*M);
+        doc.text(t,M,y);y+=t.length*14+6;
+      }
+    }
+
+    const filename=`PDH-Audit-Package-${profile.state}-${profile.disc}-${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(filename);
+    toast('Audit package downloaded ✓');
+  }catch(err){
+    console.error('generateAuditPackage error:',err);
+    toast('Could not generate the audit package — please try again');
+  }
 }
 
 function exportCSV(){
@@ -464,6 +683,7 @@ document.getElementById('paywall').addEventListener('click',e=>{if(e.target.id==
 (async function(){
   fillStates();
   await load();
+  await loadCertIds();
 
   const params=new URLSearchParams(window.location.search);
   const sessionId=params.get('session_id');
