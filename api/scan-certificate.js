@@ -1,41 +1,60 @@
+// Allow extra time for vision calls (Hobby plan max is 60s).
+module.exports.config = { maxDuration: 60 };
+
+// Reject base64 payloads larger than this (~6MB decoded) before calling Anthropic.
+const MAX_B64_LEN = 8 * 1024 * 1024; // ~8MB of base64 chars ≈ ~6MB decoded
+
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error('scan-certificate error: ANTHROPIC_API_KEY is not set');
-    return res.status(500).json({ error: 'Server misconfiguration: missing AI key' });
-  }
-
-  const body = req.body || {};
-  const { image, mediaType } = body;
-
-  if (!image || !mediaType) {
-    return res.status(400).json({ error: 'Missing image or mediaType' });
-  }
-
   try {
-    const aiResp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: image } },
-            { type: 'text', text: "This is a continuing-education / PDH completion certificate. Extract the fields and respond with ONLY a JSON object, no markdown, no preamble. Keys: title (course/activity name), provider (issuing organization), date (completion date as YYYY-MM-DD, empty string if unclear), hours (number of PDH/CE hours as a number), category (one of: technical, ethics, other — use 'ethics' for ethics, laws, rules, or professional conduct content). If a field is unknown use an empty string or 0." }
-          ]
-        }]
-      }),
-    });
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error('scan-certificate error: ANTHROPIC_API_KEY is not set');
+      return res.status(500).json({ error: 'Server misconfiguration: missing AI key' });
+    }
+
+    const body = req.body || {};
+    const { image, mediaType } = body;
+
+    if (!image || !mediaType) {
+      return res.status(400).json({ error: 'Missing image or mediaType' });
+    }
+    if (typeof image !== 'string' || image.length > MAX_B64_LEN) {
+      return res.status(413).json({ error: 'Image too large — please use a smaller image' });
+    }
+
+    // Guard against the function hanging past Vercel's limit.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55000);
+
+    let aiResp;
+    try {
+      aiResp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: image } },
+              { type: 'text', text: "This is a continuing-education / PDH completion certificate. Extract the fields and respond with ONLY a JSON object, no markdown, no preamble. Keys: title (course/activity name), provider (issuing organization), date (completion date as YYYY-MM-DD, empty string if unclear), hours (number of PDH/CE hours as a number), category (one of: technical, ethics, other — use 'ethics' for ethics, laws, rules, or professional conduct content). If a field is unknown use an empty string or 0." }
+            ]
+          }]
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
@@ -56,7 +75,11 @@ module.exports = async (req, res) => {
 
     res.json(parsed);
   } catch (err) {
-    console.error('scan-certificate error:', err.message);
-    res.status(500).json({ error: err.message });
+    if (err && err.name === 'AbortError') {
+      console.error('scan-certificate error: request timed out');
+      return res.status(504).json({ error: 'AI request timed out — please try again' });
+    }
+    console.error('scan-certificate error:', err && err.message);
+    res.status(500).json({ error: 'Unexpected server error' });
   }
 };
