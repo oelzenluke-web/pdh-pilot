@@ -380,13 +380,10 @@ async function scanFile(file){
   const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
   document.getElementById('scanning').style.display='flex';
   try{
-    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[
-        {type:"image",source:{type:"base64",media_type:file.type,data:b64}},
-        {type:"text",text:"This is a continuing-education / PDH completion certificate. Extract the fields and respond with ONLY a JSON object, no markdown, no preamble. Keys: title (course/activity name), provider (issuing organization), date (completion date as YYYY-MM-DD, empty string if unclear), hours (number of PDH/CE hours as a number), category (one of: technical, ethics, other — use 'ethics' for ethics, laws, rules, or professional conduct content). If a field is unknown use an empty string or 0."}]}]})});
-    const data=await resp.json();
-    const text=(data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('').replace(/```json|```/g,'').trim();
-    const j=JSON.parse(text);
+    const resp=await fetch("/api/scan-certificate",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({image:b64,mediaType:file.type})});
+    if(!resp.ok)throw new Error('Server error '+resp.status);
+    const j=await resp.json();
     if(j.title)document.getElementById('e-title').value=j.title;
     if(j.provider)document.getElementById('e-provider').value=j.provider;
     if(j.date)document.getElementById('e-date').value=j.date;
