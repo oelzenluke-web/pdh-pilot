@@ -227,6 +227,13 @@
       </label>
       <button id="checkoutBtn" class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="confirmUnlock()" disabled>Continue to secure checkout →</button>
       <div class="mfoot">Secure one-time payment · 30-day refund if your board rejects your log</div>
+      <div style="text-align:center;margin-top:10px">
+        <span class="edit-link" onclick="toggleCompCode()">Have an access code?</span>
+      </div>
+      <div id="compCodeRow" class="hidden" style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="compCodeInput" placeholder="Access code" style="flex:1;font-size:13px;padding:8px 10px">
+        <button class="btn" style="font-size:13px;padding:8px 14px" onclick="redeemCompCode()">Apply</button>
+      </div>
     </div>
   </div>
 </div>
@@ -345,6 +352,8 @@ function openPaywall(){
   const cb=document.getElementById('consentCheck');
   cb.checked=false;
   document.getElementById('checkoutBtn').disabled=true;
+  document.getElementById('compCodeRow').classList.add('hidden');
+  document.getElementById('compCodeInput').value='';
   document.getElementById('paywall').classList.add('show');
 }
 function closePaywall(){document.getElementById('paywall').classList.remove('show');}
@@ -363,6 +372,33 @@ async function confirmUnlock(){
     console.error('checkout error:',err);
     btn.disabled=false;btn.textContent='Continue to secure checkout →';
     toast('Checkout failed — please try again');
+  }
+}
+
+function toggleCompCode(){
+  document.getElementById('compCodeRow').classList.toggle('hidden');
+}
+
+async function redeemCompCode(){
+  const input=document.getElementById('compCodeInput');
+  const code=input.value.trim();
+  if(!code){toast('Enter an access code');return;}
+  try{
+    const resp=await fetch('/api/comp-unlock',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code})});
+    const data=await resp.json();
+    if(resp.ok&&data.ok){
+      unlock={renew:profile.renew,paidAt:new Date().toISOString(),comp:true};
+      await saveUnlock();
+      closePaywall();
+      render();
+      toast('Unlocked for this cycle ✓');
+    }else{
+      toast('Invalid access code');
+    }
+  }catch(err){
+    console.error('comp-unlock error:',err);
+    toast('Couldn\'t verify code — try again');
   }
 }
 
